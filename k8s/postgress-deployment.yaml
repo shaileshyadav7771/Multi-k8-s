@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgress-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: pg
+  template:
+    metadata:
+      labels:
+        component: pg
+    spec:
+      volumes:
+        - name: postgress-storage
+          persistentVolumeClaim:
+            claimName: db-persistent-volume-claim
+      containers:
+      - name: pg-app
+        image: postgres
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+          - name: postgress-storage
+            mountPath: /var/lib/postgresql/data
+            subPath: shailesh-postgres
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pgpassword
+                key: PGPASSWORD

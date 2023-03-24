@@ -1,0 +1,74 @@
+resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+// Now mentioning resource..
+
+
+In service ClusterIP:
+=========================
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: web
+  ports:
+  - port: 3070
+    targetPort: 3000
+
+port is the port number on which the service will listen for incoming traffic. In this case, the service is defined to listen on port 3070.
+targetPort is the port number on which the pods targeted by the service are listening for traffic. In this case, the pods are expected to be listening on port 3000.
+When traffic is sent to the service on the defined port, it will be forwarded to the targeted pods on their targetPort. This allows multiple pods to be abstracted behind a single service and accessed through a consistent endpoint.
+
+
+
+C:\Users\>kubectl get storageclass
+NAME                 PROVISIONER          RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+hostpath (default)   docker.io/hostpath   Delete          Immediate           false                  7d2h
+
+
+The StorageClass defines a particular class of storage in a Kubernetes cluster that is available for use by PersistentVolumeClaim objects. Here are some differences between the standard, premium, and local storage classes:
+
+Standard:
+==========
+ This is the default storage class in many Kubernetes installations. It provides standard, persistent block storage suitable for most general-purpose workloads. This storage class is typically backed by network-attached storage (NAS) or storage area network (SAN) systems and provides moderate performance and reliability.
+
+Premium: 
+==========
+This storage class provides high-performance, low-latency storage suitable for demanding workloads such as databases or data analytics. It is typically backed by flash-based storage, which provides much faster I/O performance than traditional disk-based storage. This storage class may have higher costs than the standard storage class.
+
+Local: 
+========
+This storage class uses local storage on the node where the pod is running. This storage is typically faster than network-attached storage but can be less reliable, as the storage is tied to the node and may not be backed up or replicated. This storage class is useful for workloads that require high-performance storage and can tolerate some level of data loss, such as transient data or caches.
+
+The specific characteristics and performance of each storage class may vary depending on the implementation and the storage backend used. When selecting a storage class for your workload, consider the requirements of your application and choose the class that provides the appropriate level of performance, reliability, and cost for your needs.
+
+
+
+
+How to create a Screte using imperative command:
+=================================================
+PS D:\Kubernater-Learning\multi-container-build> kubectl create secret generic pgpassword --from-literal PGPASSWORD=shailesh123
+secret/pgpassword created
+
+Note:
+------
+in above we'll be using pgpassword for refering the password.
+
+>kubectl get secret -o wide
+NAME         TYPE     DATA   AGE
+pgpassword   Opaque   1      117s
+
+we are using new pass for pg that is shailesh123 so we need to update pg deployment and use above 
+variable pgpassword in server deployment env
+
+secretKeyRef:
+                name: pgpassword
+                key: PGPASSWORD
+
+Note: in the above example pgpassword is key and refering PGPASSWORD
+(Note : we have added only one k:v but it can be many..)
