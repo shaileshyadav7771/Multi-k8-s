@@ -1,0 +1,47 @@
+sudo : required
+
+services:
+  - docker
+
+env:
+  # declaring env so that we can use SHA in the deploy.sh file
+  global:
+    - SHA=$(git rev-parse HEAD)
+    # we will disable the option if any of the below cmds run and ask for Y|N as we'll not have an option to do..
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1 # this'll make sure GC CLI don't show any prompt to us..
+
+before_install:
+  - openssl aes-256-* #this we'll get after running encryption cmd.(i.e travis encrypt-file service-account.json -r Shailesh/multi-k8s Note: It is case sensitive)
+  # if we check file in cwd(/app) we can see It created an service-account.json.enc (which is safe and we can add it to the git repository)and delete the service-account.json. (failing to delete means anyone can access to out GC account and do whatever want).
+  # And how we got above key is we generated it from GC (In AWS it is IAM)
+  - curl https://sdk.cloud.google.com | bash > /dev/null;
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  - gcloud components update kubectl
+  - gcloud auth activate-service-account --key-file service-account.json
+  # we need to set the project which we are using in GC
+  - gcloud config set-project project_ID(not name)
+  # we need to set compute zone(same what we set while creating cluster in GC it can be the neareest one).
+  - gcloud config set compute/zone us-central1-a
+  # we need to tell gcloud what cluster we are working with if we issue an error cmds
+  - gcloud container clusters get-credentials multi-cluster(cluster_name)
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" -password-stdin
+  # By using -password-stdin, the Docker password is not exposed in the Travis CI logs or command-line history, which is important for security reasons. This way, the password is kept confidential and not visible to anyone who might be watching the Travis CI build logs.
+
+  # after docker login now we'll build the image..
+  - docker build -t shailesh/react-test -f ./client/Dockerfile.dev ./client # (build context)
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test # (this time we are not adding -- ---coverage)
+
+# TODO: 
+# we will write a seperate script which will do below work:
+# 1. Build all our images 
+# 2. Tag each one 
+# 3. push each to dockerhub
+
+deploy:
+  provider: script
+  # Note : Before here we have used elasticbeanstack but for k8's there is no default provider so we'll be using custom script.(we are telling hey)
+  script: bash ./deploy.sh
+  on:
+    branch: master # we want above deploy script to be run only when we are pushing changes to master branch

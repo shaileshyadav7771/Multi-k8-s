@@ -1,0 +1,36 @@
+Travis Login Issues, "iv undefined" or "repository not known"
+updated 1-8-2021
+
+In the upcoming lecture, we will be encrypting a service account file in the Travis container we created in the previous lecture. Travis is finalizing its transition from .org to .com, and you may end up getting errors when attempting to log in or during deployment.
+
+The Travis login now requires a Github Token. Please follow these instructions to create a Personal Token for Travis to use here:
+
+https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token
+
+This will also require setting the scope. Travis requires the permissions noted here:
+
+https://docs.travis-ci.com/user/github-oauth-scopes/#repositories-on-httpstravis-cicom-private-and-public
+
+The login command will now look like this:
+
+travis login --github-token YOUR_PERSONAL_TOKEN --com
+
+or
+
+travis login --github-token YOUR_PERSONAL_TOKEN --pro
+
+When you encrypt the file, you must pass the same --com or --pro flag you used to log in:
+
+travis encrypt-file service-account.json -r USERNAME/REPO --com
+
+or
+
+travis encrypt-file service-account.json -r USERNAME/REPO --pro
+
+If you are getting iv undefined errors, you may have missed passing the --com or --pro flags to both the login and encryption commands. Also, if you still have a .org Travis account these old accounts will need to be migrated to .com ASAP.
+
+Please visit the migration guide here:
+
+https://docs.travis-ci.com/user/migrate/open-source-repository-migration#migrating-a-repository
+
+You can also get an iv undefined error if you've passed the wrong repo to the file encryption or passed a repo name with a typo in it. Please note, after the migration, or after fixing a typo, you'll need to run through the entire encryption process again.
